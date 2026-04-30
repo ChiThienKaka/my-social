@@ -19,9 +19,10 @@ import useChatStore from "@/features/chat/store/useChatStore";
 import { resolveImageUrl } from "@/utils/resolveImageUrl";
 
 export default function ChatDetailScreen() {
-  const { chatId, isGroup: isGroupParam } = useLocalSearchParams<{
+  const { chatId, isGroup: isGroupParam, isAi: isAIParam } = useLocalSearchParams<{
     chatId: string;
     isGroup?: string;
+    isAi?: string;
   }>();
   const insets = useSafeAreaInsets();
   const [message, setMessage] = useState("");
@@ -30,30 +31,40 @@ export default function ChatDetailScreen() {
   const {
     messages,
     isLoading,
+    isAIThinking,
     fetchMessages,
+    fetchAIMessages,
     sendMessage,
     sendGroupMessage,
+    sendAIMessage,
     startPolling,
     stopPolling,
   } = useChatStore();
 
   const isGroup = isGroupParam === "true";
+  const isAI = isAIParam === "true";
   const currentUserId = user?.id || 0;
 
   useEffect(() => {
     if (chatId) {
-      fetchMessages(chatId, isGroup, currentUserId);
-      startPolling(chatId, isGroup, currentUserId, 5000);
+      if (isAI) {
+        fetchAIMessages(currentUserId);
+      } else {
+        fetchMessages(chatId, isGroup, currentUserId);
+        startPolling(chatId, isGroup, currentUserId, 5000);
+      }
     }
     return () => stopPolling();
-  }, [chatId, isGroup]);
+  }, [chatId, isGroup, isAI, currentUserId]);
 
   const handleSend = async () => {
     if (!message.trim() || !chatId) return;
     const text = message.trim();
     setMessage("");
     try {
-      if (isGroup) {
+      if (isAI) {
+        await sendAIMessage(text, currentUserId);
+      } else if (isGroup) {
         await sendGroupMessage(Number(chatId), text, currentUserId);
       } else {
         await sendMessage(Number(chatId), text, currentUserId);
@@ -64,7 +75,7 @@ export default function ChatDetailScreen() {
     }
   };
 
-  const chatTitle = isGroup ? "Nhóm" : "Trò chuyện";
+  const chatTitle = isAI ? "Trợ lý AI" : isGroup ? "Nhóm" : "Trò chuyện";
 
   return (
     <KeyboardAvoidingView
@@ -94,6 +105,14 @@ export default function ChatDetailScreen() {
                   color={colors.text.white}
                 />
               </View>
+            ) : isAI ? (
+              <View style={[styles.headerIconContainer, styles.aiHeaderIconContainer]}>
+                <Ionicons
+                  name="sparkles-outline"
+                  size={20}
+                  color={colors.text.white}
+                />
+              </View>
             ) : (
               <Avatar name={chatTitle} size={40} />
             )}
@@ -102,11 +121,11 @@ export default function ChatDetailScreen() {
                 {chatTitle}
               </Text>
               <Text style={styles.headerSubtitle}>
-                {isGroup ? "Nhóm học tập" : "Đang hoạt động"}
+                {isAI ? "Tư vấn việc làm" : isGroup ? "Nhóm học tập" : "Đang hoạt động"}
               </Text>
             </View>
           </View>
-          {!isGroup && (
+          {!isGroup && !isAI && (
             <View style={styles.headerActions}>
               <TouchableOpacity style={styles.actionButton} activeOpacity={0.7}>
                 <Ionicons
@@ -128,13 +147,29 @@ export default function ChatDetailScreen() {
 
         <FlatList
           ref={flatListRef}
-          data={messages}
+          data={
+            isAI && isAIThinking
+              ? [
+                  ...messages,
+                  {
+                    id: -Date.now(),
+                    content: "",
+                    isOwn: false,
+                    timestamp: "Vừa xong",
+                    senderName: "AI tư vấn",
+                    senderAvatar: null,
+                    senderId: -1,
+                  },
+                ]
+              : messages
+          }
           keyExtractor={(item) => String(item.id)}
           renderItem={({ item }) => (
             <MessageBubble
               message={item.content}
               isOwn={item.isOwn}
               timestamp={item.timestamp}
+              isLoading={isAI && isAIThinking && item.senderId === -1 && !item.content}
               senderName={item.isOwn ? undefined : item.senderName}
               senderAvatar={
                 !item.isOwn && item.senderAvatar
@@ -164,7 +199,7 @@ export default function ChatDetailScreen() {
 
         <MessageInput
           placeholder={
-            isGroup ? "Nhắn tin cho nhóm..." : "Nhập tin nhắn..."
+            isAI ? "Nhập yêu cầu tìm việc..." : isGroup ? "Nhắn tin cho nhóm..." : "Nhập tin nhắn..."
           }
           value={message}
           onChangeText={setMessage}
@@ -198,6 +233,9 @@ const styles = StyleSheet.create({
     marginRight: 12,
   },
   headerTextContainer: { flex: 1 },
+  aiHeaderIconContainer: {
+    backgroundColor: "#7C3AED",
+  },
   headerName: {
     fontSize: 16,
     fontWeight: "700",

@@ -1,5 +1,11 @@
 import React from "react";
-import { StyleSheet, View, Text, TouchableOpacity } from "react-native";
+import {
+  StyleSheet,
+  View,
+  Text,
+  TouchableOpacity,
+  ActivityIndicator,
+} from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import Avatar from "@/components/ui/Avatar";
 import colors from "@/constants/colors";
@@ -8,6 +14,7 @@ interface MessageBubbleProps {
   message: string;
   isOwn?: boolean;
   timestamp: string;
+  isLoading?: boolean;
   isRead?: boolean;
   senderName?: string;
   senderAvatar?: { uri: string } | number;
@@ -22,6 +29,7 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({
   message,
   isOwn = false,
   timestamp,
+  isLoading = false,
   isRead,
   senderName,
   senderAvatar,
@@ -63,7 +71,17 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({
             </View>
           </View>
         )}
-        {message ? (
+        {isLoading ? (
+          <View style={styles.loadingContainer}>
+            <ActivityIndicator
+              size="small"
+              color={isOwn ? colors.text.white : colors.teal.primary}
+            />
+            <Text style={[styles.loadingText, isOwn && styles.loadingTextOwn]}>
+              AI đang suy nghĩ...
+            </Text>
+          </View>
+        ) : message ? (
           <Text
             style={[
               styles.message,
@@ -183,6 +201,20 @@ const styles = StyleSheet.create({
     height: 8,
     borderRadius: 4,
     backgroundColor: colors.text.white,
+  },
+  loadingContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    minHeight: 20,
+  },
+  loadingText: {
+    fontSize: 14,
+    color: colors.text.muted,
+  },
+  loadingTextOwn: {
+    color: colors.text.white,
+    opacity: 0.9,
   },
 });
 

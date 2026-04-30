@@ -17,6 +17,22 @@ import useChatStore from "@/features/chat/store/useChatStore";
 import { useAuthStore } from "@/features/auth";
 import { resolveImageUrl } from "@/utils/resolveImageUrl";
 
+interface ChatListItem {
+  id: string;
+  rawId: string;
+  type: ChatType;
+  name: string;
+  lastMessage: string;
+  timestamp: string;
+  unreadCount: number;
+  isGroup: boolean;
+  isAI?: boolean;
+  avatar?: { uri: string } | number;
+  isOnline?: boolean;
+  icon?: keyof typeof Ionicons.glyphMap;
+  iconBackgroundColor?: string;
+}
+
 export default function MessagesScreen() {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedFilter, setSelectedFilter] = useState("all");
@@ -53,7 +69,7 @@ export default function MessagesScreen() {
     timestamp: "",
     unreadCount: 0,
     isGroup: true,
-  }));
+  })) as ChatListItem[];
 
   const directChats = conversations.map((c) => ({
     id: `d_${c.user_id}`,
@@ -68,12 +84,27 @@ export default function MessagesScreen() {
     unreadCount: c.unread_count || 0,
     isOnline: false,
     isGroup: false,
-  }));
+  })) as ChatListItem[];
 
-  let allChats = [...groupChats, ...directChats];
+  const aiChat: ChatListItem = {
+    id: "ai_assistant",
+    rawId: "ai",
+    type: "ai",
+    name: "Trợ lý AI",
+    lastMessage: "Hỏi việc làm, kỹ năng hoặc CV...",
+    timestamp: "",
+    unreadCount: 0,
+    isGroup: false,
+    isAI: true,
+    icon: "sparkles-outline",
+    iconBackgroundColor: "#7C3AED",
+  };
+
+  let allChats: ChatListItem[] = [aiChat, ...groupChats, ...directChats];
 
   if (selectedFilter === "groups") allChats = groupChats;
   else if (selectedFilter === "direct") allChats = directChats;
+  else if (selectedFilter === "ai") allChats = [aiChat];
 
   if (searchQuery.trim()) {
     const q = searchQuery.toLowerCase();
@@ -82,6 +113,7 @@ export default function MessagesScreen() {
 
   const filters = [
     { id: "all", label: "Tất cả" },
+    { id: "ai", label: "AI" },
     { id: "groups", label: "Nhóm" },
     { id: "direct", label: "Cá nhân" },
   ];
@@ -168,9 +200,11 @@ export default function MessagesScreen() {
             isOnline={(chat as any).isOnline}
             onPress={() =>
               router.push(
-                `/chat/${chat.rawId}?isGroup=${chat.isGroup}` as any,
+                `/chat/${chat.rawId}?isGroup=${chat.isGroup}&isAi=${chat.isAI ? "true" : "false"}` as any,
               )
             }
+            icon={chat.icon}
+            iconBackgroundColor={chat.iconBackgroundColor}
           />
         ))}
       </ScrollView>

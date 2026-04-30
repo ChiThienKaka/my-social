@@ -48,3 +48,11 @@ Join our community of developers creating universal apps.
 
 - [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
 - [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+
+tìm adb nào đang hoạt động
+tasklist | findstr adb
+kết quả
+C:\Windows\System32>tasklist | findstr adb
+adb.exe 10640 Console 1 13,888 K
+
+wmic process where ProcessId=10640 get ExecutablePath

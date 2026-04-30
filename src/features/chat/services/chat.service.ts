@@ -43,6 +43,15 @@ export interface GroupMember {
   member_role: string;
 }
 
+export interface AIRecentMessage {
+  id: number;
+  role: "user" | "assistant";
+  content: string;
+  created_at: string;
+  updated_at: string;
+  user_id: number;
+}
+
 function extractArray<T>(res: any): T[] {
   if (Array.isArray(res.data)) return res.data;
   if (res.data?.data && Array.isArray(res.data.data)) return res.data.data;
@@ -137,6 +146,26 @@ export const chatService = {
     } catch (error) {
       console.warn("[chatService.getGroupMembers] error:", error);
       return [];
+    }
+  },
+
+  getAIRecentMessages: async (): Promise<AIRecentMessage[]> => {
+    try {
+      const res = await http.get("/api/chat-box/recent-messages");
+      return extractArray<AIRecentMessage>(res);
+    } catch (error) {
+      console.warn("[chatService.getAIRecentMessages] error:", error);
+      return [];
+    }
+  },
+
+  searchAI: async (question: string): Promise<string> => {
+    try {
+      const res = await http.post("/api/chat-box/search", { question });
+      return res.data?.answer || res.data?.data?.answer || "";
+    } catch (error) {
+      console.warn("[chatService.searchAI] error:", error);
+      throw error;
     }
   },
 };

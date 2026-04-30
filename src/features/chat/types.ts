@@ -1,4 +1,4 @@
-export type ChatType = "direct" | "group" | "class";
+export type ChatType = "direct" | "group" | "class" | "ai";
 
 
 

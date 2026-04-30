@@ -4,6 +4,7 @@ import {
   type ConversationItem,
   type ChatMessage,
   type GroupMessage,
+  type AIRecentMessage,
 } from "../services/chat.service";
 import { groupService, type GroupItem } from "../services/group.service";
 
@@ -22,13 +23,16 @@ interface ChatState {
   groups: GroupItem[];
   messages: NormalizedMessage[];
   isLoading: boolean;
+  isAIThinking: boolean;
   pollingId: ReturnType<typeof setInterval> | null;
 
   fetchConversations: () => Promise<void>;
   fetchGroups: () => Promise<void>;
   fetchMessages: (chatId: string, isGroup: boolean, currentUserId: number) => Promise<void>;
+  fetchAIMessages: (currentUserId: number) => Promise<void>;
   sendMessage: (receiverId: number, content: string, currentUserId: number) => Promise<void>;
   sendGroupMessage: (groupId: number, content: string, currentUserId: number) => Promise<void>;
+  sendAIMessage: (content: string, currentUserId: number) => Promise<void>;
   startPolling: (
     chatId: string,
     isGroup: boolean,
@@ -78,11 +82,25 @@ function normalizeGroup(msg: GroupMessage, currentUserId: number): NormalizedMes
   };
 }
 
+function normalizeAIChat(msg: AIRecentMessage, currentUserId: number): NormalizedMessage {
+  const isOwn = msg.role === "user";
+  return {
+    id: msg.id,
+    content: msg.content,
+    isOwn,
+    timestamp: formatTimestamp(msg.created_at),
+    senderName: isOwn ? "Bạn" : "AI tư vấn",
+    senderAvatar: null,
+    senderId: isOwn ? currentUserId : -1,
+  };
+}
+
 const useChatStore = create<ChatState>((set, get) => ({
   conversations: [],
   groups: [],
   messages: [],
   isLoading: false,
+  isAIThinking: false,
   pollingId: null,
 
   fetchConversations: async () => {
@@ -113,6 +131,18 @@ const useChatStore = create<ChatState>((set, get) => ({
         const raw = await chatService.getConversation(Number(chatId));
         set({ messages: raw.map((m) => normalizeChat(m, currentUserId)) });
       }
+    } catch {
+      /* silently fail */
+    } finally {
+      set({ isLoading: false });
+    }
+  },
+
+  fetchAIMessages: async (currentUserId) => {
+    set({ isLoading: true });
+    try {
+      const raw = await chatService.getAIRecentMessages();
+      set({ messages: raw.map((m) => normalizeAIChat(m, currentUserId)) });
     } catch {
       /* silently fail */
     } finally {
@@ -153,6 +183,44 @@ const useChatStore = create<ChatState>((set, get) => ({
       await chatService.sendGroupMessage(groupId, content);
     } catch {
       set((s) => ({ messages: s.messages.filter((m) => m.id !== optimistic.id) }));
+    }
+  },
+
+  sendAIMessage: async (content, currentUserId) => {
+    const userOptimistic: NormalizedMessage = {
+      id: Date.now(),
+      content,
+      isOwn: true,
+      timestamp: "Vừa xong",
+      senderName: "Bạn",
+      senderAvatar: null,
+      senderId: currentUserId,
+    };
+    set((s) => ({ messages: [...s.messages, userOptimistic] }));
+    set({ isAIThinking: true });
+
+    try {
+      const thinkingDelay = 1000 + Math.floor(Math.random() * 1000);
+      const [answer] = await Promise.all([
+        chatService.searchAI(content),
+        new Promise((resolve) => setTimeout(resolve, thinkingDelay)),
+      ]);
+      if (!answer.trim()) return;
+
+      const assistantMessage: NormalizedMessage = {
+        id: Date.now() + 1,
+        content: answer,
+        isOwn: false,
+        timestamp: "Vừa xong",
+        senderName: "AI tư vấn",
+        senderAvatar: null,
+        senderId: -1,
+      };
+      set((s) => ({ messages: [...s.messages, assistantMessage] }));
+    } catch {
+      set((s) => ({ messages: s.messages.filter((m) => m.id !== userOptimistic.id) }));
+    } finally {
+      set({ isAIThinking: false });
     }
   },
 

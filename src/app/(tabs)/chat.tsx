@@ -1,21 +1,21 @@
-import React, { useState, useEffect, useCallback } from "react";
+import { Avatar, Chip, SearchBar } from "@/components/ui";
+import colors from "@/constants/colors";
+import { useAuthStore } from "@/features/auth";
+import { ChatItem, type ChatType } from "@/features/chat";
+import useChatStore from "@/features/chat/store/useChatStore";
+import { resolveImageUrl } from "@/utils/resolveImageUrl";
+import { Ionicons } from "@expo/vector-icons";
+import { router } from "expo-router";
+import React, { useCallback, useEffect, useState } from "react";
 import {
-  StyleSheet,
-  View,
-  ScrollView,
-  TouchableOpacity,
-  Text,
   RefreshControl,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { Ionicons } from "@expo/vector-icons";
-import { SearchBar, Chip, Avatar } from "@/components/ui";
-import { ChatItem, type ChatType } from "@/features/chat";
-import colors from "@/constants/colors";
-import { router } from "expo-router";
-import useChatStore from "@/features/chat/store/useChatStore";
-import { useAuthStore } from "@/features/auth";
-import { resolveImageUrl } from "@/utils/resolveImageUrl";
 
 interface ChatListItem {
   id: string;

@@ -383,7 +383,7 @@ export default function RecruitScreen() {
                       <View style={styles.loadingRow}>
                         <ActivityIndicator
                           size="small"
-                          color={colors.teal.primary}
+                          color="#19a49c"
                         />
                         <Text style={styles.chatBubbleTextAssistant}>{item.content}</Text>
                       </View>
@@ -458,11 +458,15 @@ export default function RecruitScreen() {
         activeOpacity={0.85}
         onPress={() => setIsChatOpen((prev) => !prev)}
       >
-        <Ionicons
-          name={isChatOpen ? "close" : "sparkles-outline"}
-          size={22}
-          color={colors.text.white}
-        />
+        {isChatOpen ? (
+          <Ionicons name="close" size={22} color={colors.text.white} />
+        ) : (
+          <Ionicons
+            name="sparkles-outline"
+            size={22}
+            color={colors.text.white}
+          />
+        )}
       </TouchableOpacity>
     </SafeAreaView>
   );
@@ -577,7 +581,7 @@ const styles = StyleSheet.create({
     width: 56,
     height: 56,
     borderRadius: 28,
-    backgroundColor: "#7C3AED",
+    backgroundColor: "#19a49c",
     alignItems: "center",
     justifyContent: "center",
     elevation: 5,
@@ -600,7 +604,7 @@ const styles = StyleSheet.create({
     overflow: "hidden",
   },
   chatHeader: {
-    backgroundColor: "#7C3AED",
+    backgroundColor: "#19a49c",
     paddingHorizontal: 14,
     paddingVertical: 12,
     flexDirection: "row",
@@ -637,7 +641,7 @@ const styles = StyleSheet.create({
   },
   chatBubbleAssistant: {
     alignSelf: "flex-start",
-    backgroundColor: "#F3F4F6",
+    backgroundColor: "#E8F8F6",
   },
   chatBubbleUser: {
     alignSelf: "flex-end",
@@ -707,7 +711,7 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "#7C3AED",
+    backgroundColor: "#19a49c",
   },
   chatSendButtonDisabled: {
     opacity: 0.5,

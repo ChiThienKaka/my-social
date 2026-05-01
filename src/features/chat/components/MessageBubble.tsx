@@ -18,6 +18,10 @@ interface MessageBubbleProps {
   isRead?: boolean;
   senderName?: string;
   senderAvatar?: { uri: string } | number;
+  /** Màu nhấn cho tin nhắn phía assistant (ví dụ chat AI) */
+  assistantAccentColor?: string;
+  /** Nền bubble phía đối phương (ví dụ #E8F8F6 cho AI) */
+  assistantSurfaceColor?: string;
   fileAttachment?: {
     name: string;
     size: string;
@@ -33,8 +37,12 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({
   isRead,
   senderName,
   senderAvatar,
+  assistantAccentColor,
+  assistantSurfaceColor,
   fileAttachment,
 }) => {
+  const otherAccent = assistantAccentColor ?? colors.teal.primary;
+  const otherSurface = assistantSurfaceColor ?? colors.background.grey;
   return (
     <View
       style={[
@@ -48,11 +56,12 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({
       <View
         style={[
           styles.bubbleContainer,
+          !isOwn && { backgroundColor: otherSurface },
           isOwn && styles.bubbleContainerOwn,
         ]}
       >
         {!isOwn && senderName && (
-          <Text style={styles.senderName}>{senderName}</Text>
+          <Text style={[styles.senderName, { color: otherAccent }]}>{senderName}</Text>
         )}
         {fileAttachment && (
           <View style={styles.fileContainer}>
@@ -75,7 +84,7 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({
           <View style={styles.loadingContainer}>
             <ActivityIndicator
               size="small"
-              color={isOwn ? colors.text.white : colors.teal.primary}
+              color={isOwn ? colors.text.white : otherAccent}
             />
             <Text style={[styles.loadingText, isOwn && styles.loadingTextOwn]}>
               AI đang suy nghĩ...
@@ -131,7 +140,6 @@ const styles = StyleSheet.create({
   },
   bubbleContainer: {
     maxWidth: "75%",
-    backgroundColor: colors.background.grey,
     borderRadius: 16,
     padding: 12,
     marginLeft: 8,
@@ -144,7 +152,6 @@ const styles = StyleSheet.create({
   senderName: {
     fontSize: 12,
     fontWeight: "600",
-    color: colors.teal.primary,
     marginBottom: 4,
   },
   message: {

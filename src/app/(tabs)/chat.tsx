@@ -6,7 +6,8 @@ import useChatStore from "@/features/chat/store/useChatStore";
 import { resolveImageUrl } from "@/utils/resolveImageUrl";
 import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
-import React, { useCallback, useEffect, useState } from "react";
+import React, { useCallback, useState } from "react";
+import { useFocusEffect } from "@react-navigation/native";
 import {
   RefreshControl,
   ScrollView,
@@ -41,21 +42,22 @@ export default function MessagesScreen() {
   const { user } = useAuthStore();
   const { conversations, groups, fetchConversations, fetchGroups } =
     useChatStore();
+  const userAvatarUrl = user?.avatar_url
+    ? resolveImageUrl(user.avatar_url)
+    : undefined;
 
-  useEffect(() => {
-    fetchConversations();
-    fetchGroups();
-    const pollId = setInterval(() => {
-      fetchConversations();
-    }, 10000);
-    return () => clearInterval(pollId);
-  }, []);
+  useFocusEffect(
+    useCallback(() => {
+      void fetchConversations();
+      void fetchGroups();
+    }, [fetchConversations, fetchGroups]),
+  );
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
     await Promise.all([fetchConversations(), fetchGroups()]);
     setRefreshing(false);
-  }, []);
+  }, [fetchConversations, fetchGroups]);
 
   const groupChats = groups.map((item) => ({
     id: `g_${item.group.group_id}`,
@@ -97,7 +99,7 @@ export default function MessagesScreen() {
     isGroup: false,
     isAI: true,
     icon: "sparkles-outline",
-    iconBackgroundColor: "#7C3AED",
+    iconBackgroundColor: "#19a49c",
   };
 
   let allChats: ChatListItem[] = [aiChat, ...groupChats, ...directChats];
@@ -123,11 +125,7 @@ export default function MessagesScreen() {
       <View style={styles.header}>
         <View style={styles.headerLeft}>
           <Avatar
-            source={
-              user?.avatar_url
-                ? { uri: resolveImageUrl(user.avatar_url) }
-                : undefined
-            }
+            source={userAvatarUrl ? { uri: userAvatarUrl } : undefined}
             name={user?.name || "U"}
             size={40}
           />

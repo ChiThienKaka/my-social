@@ -18,6 +18,9 @@ import { useAuthStore } from "@/features/auth";
 import useChatStore from "@/features/chat/store/useChatStore";
 import { resolveImageUrl } from "@/utils/resolveImageUrl";
 
+const AI_BRAND = "#19a49c";
+const AI_ASSISTANT_BUBBLE_BG = "#E8F8F6";
+
 export default function ChatDetailScreen() {
   const { chatId, isGroup: isGroupParam, isAi: isAIParam } = useLocalSearchParams<{
     chatId: string;
@@ -88,13 +91,17 @@ export default function ChatDetailScreen() {
       >
         <Stack.Screen options={{ headerShown: false }} />
 
-        <View style={styles.header}>
+        <View style={[styles.header, isAI && styles.headerAI]}>
           <TouchableOpacity
             onPress={() => router.back()}
             style={styles.backButton}
             activeOpacity={0.7}
           >
-            <Ionicons name="arrow-back" size={24} color={colors.icon.primary} />
+            <Ionicons
+              name="arrow-back"
+              size={24}
+              color={isAI ? colors.text.white : colors.icon.primary}
+            />
           </TouchableOpacity>
           <View style={styles.headerInfo}>
             {isGroup ? (
@@ -117,10 +124,13 @@ export default function ChatDetailScreen() {
               <Avatar name={chatTitle} size={40} />
             )}
             <View style={styles.headerTextContainer}>
-              <Text style={styles.headerName} numberOfLines={1}>
+              <Text
+                style={[styles.headerName, isAI && styles.headerNameOnBrand]}
+                numberOfLines={1}
+              >
                 {chatTitle}
               </Text>
-              <Text style={styles.headerSubtitle}>
+              <Text style={[styles.headerSubtitle, isAI && styles.headerSubtitleOnBrand]}>
                 {isAI ? "Tư vấn việc làm" : isGroup ? "Nhóm học tập" : "Đang hoạt động"}
               </Text>
             </View>
@@ -164,20 +174,26 @@ export default function ChatDetailScreen() {
               : messages
           }
           keyExtractor={(item) => String(item.id)}
-          renderItem={({ item }) => (
-            <MessageBubble
-              message={item.content}
-              isOwn={item.isOwn}
-              timestamp={item.timestamp}
-              isLoading={isAI && isAIThinking && item.senderId === -1 && !item.content}
-              senderName={item.isOwn ? undefined : item.senderName}
-              senderAvatar={
-                !item.isOwn && item.senderAvatar
-                  ? { uri: resolveImageUrl(item.senderAvatar) }
-                  : undefined
-              }
-            />
-          )}
+          renderItem={({ item }) => {
+            const senderAvatarUri =
+              !item.isOwn && item.senderAvatar
+                ? resolveImageUrl(item.senderAvatar)
+                : undefined;
+            return (
+              <MessageBubble
+                message={item.content}
+                isOwn={item.isOwn}
+                timestamp={item.timestamp}
+                isLoading={isAI && isAIThinking && item.senderId === -1 && !item.content}
+                senderName={item.isOwn ? undefined : item.senderName}
+                assistantAccentColor={isAI ? AI_BRAND : undefined}
+                assistantSurfaceColor={isAI && !item.isOwn ? AI_ASSISTANT_BUBBLE_BG : undefined}
+                senderAvatar={
+                  senderAvatarUri ? { uri: senderAvatarUri } : undefined
+                }
+              />
+            );
+          }}
           contentContainerStyle={styles.messagesContent}
           showsVerticalScrollIndicator={false}
           onContentSizeChange={() =>
@@ -188,7 +204,7 @@ export default function ChatDetailScreen() {
               <Ionicons
                 name="chatbubble-ellipses-outline"
                 size={48}
-                color={colors.text.muted}
+                color={isAI ? AI_BRAND : colors.text.muted}
               />
               <Text style={styles.emptyText}>
                 {isLoading ? "Đang tải..." : "Bắt đầu cuộc trò chuyện!"}
@@ -204,6 +220,7 @@ export default function ChatDetailScreen() {
           value={message}
           onChangeText={setMessage}
           onSend={handleSend}
+          {...(isAI ? { sendActiveBackgroundColor: AI_BRAND } : {})}
         />
       </SafeAreaView>
     </KeyboardAvoidingView>
@@ -221,6 +238,10 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: colors.border.light,
   },
+  headerAI: {
+    backgroundColor: AI_BRAND,
+    borderBottomColor: "rgba(255,255,255,0.2)",
+  },
   backButton: { padding: 4, marginRight: 12 },
   headerInfo: { flexDirection: "row", alignItems: "center", flex: 1 },
   headerIconContainer: {
@@ -234,7 +255,7 @@ const styles = StyleSheet.create({
   },
   headerTextContainer: { flex: 1 },
   aiHeaderIconContainer: {
-    backgroundColor: "#7C3AED",
+    backgroundColor: "rgba(255,255,255,0.22)",
   },
   headerName: {
     fontSize: 16,
@@ -242,7 +263,13 @@ const styles = StyleSheet.create({
     color: colors.text.primary,
     marginBottom: 2,
   },
+  headerNameOnBrand: {
+    color: colors.text.white,
+  },
   headerSubtitle: { fontSize: 13, color: colors.text.muted },
+  headerSubtitleOnBrand: {
+    color: "rgba(255,255,255,0.88)",
+  },
   headerActions: { flexDirection: "row", gap: 12 },
   actionButton: { padding: 4 },
   messagesContent: { paddingVertical: 16, flexGrow: 1 },

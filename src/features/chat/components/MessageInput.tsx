@@ -18,6 +18,8 @@ interface MessageInputProps {
   onAttach?: () => void;
   onCamera?: () => void;
   onEmoji?: () => void;
+  /** Khi có nội dung, màu nền nút gửi (mặc định teal app) */
+  sendActiveBackgroundColor?: string;
 }
 
 const MessageInput: React.FC<MessageInputProps> = ({
@@ -28,6 +30,7 @@ const MessageInput: React.FC<MessageInputProps> = ({
   onAttach,
   onCamera,
   onEmoji,
+  sendActiveBackgroundColor = colors.teal.primary,
 }) => {
   const [message, setMessage] = useState(value || "");
 
@@ -96,7 +99,9 @@ const MessageInput: React.FC<MessageInputProps> = ({
           onPress={handleSend}
           style={[
             styles.sendButton,
-            (value || message).trim() && styles.sendButtonActive,
+            (value || message).trim() && {
+              backgroundColor: sendActiveBackgroundColor,
+            },
           ]}
           activeOpacity={0.7}
           disabled={!(value || message).trim()}
@@ -155,9 +160,6 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     marginLeft: 8,
-  },
-  sendButtonActive: {
-    backgroundColor: colors.teal.primary,
   },
 });
 
